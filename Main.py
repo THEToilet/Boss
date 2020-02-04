@@ -1,5 +1,9 @@
 import pyxel
 import random
+import time
+import math
+import Enemy as enemy
+import Vector2 as vec2
 
 WINDOW_H = 120
 WINDOW_W = 150
@@ -9,15 +13,9 @@ ENEMY_H = 16
 ENEMY_W = 16
 
 
-class Vec2:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-
 class pc:
     def __init__(self):
-        self.pos = Vec2(10, 95)
+        self.pos = vec2.Vec2(10, 95)
         self.vec = 0
 
     def update(self, x, y, dx):
@@ -28,7 +26,7 @@ class pc:
 
 class Ball:
     def __init__(self):
-        self.pos = Vec2(0, 0)
+        self.pos = vec2.Vec2(0, 0)
         self.vec = 0
         self.size = 2
         self.speed = 3
@@ -42,46 +40,26 @@ class Ball:
         self.color = color
 
 
-class Enemy:
-    def __init__(self):
-        self.pos = Vec2(0, 0)
-        self.vec = 0
-        self.speed = 0.02
-
-    def update(self, x, y, dx):
-        self.pos.x = x
-        self.pos.y = y
-        self.vec = dx
-
-
 class App:
     def __init__(self):
-        self.player_x = 0
-        self.player_y = 0
-        self.player_hp = 30
-        self.enemy_hp = 30
-        pyxel.init(WINDOW_W, WINDOW_H, caption="kamisama")
-        pyxel.load("kami.pyxel")
+        self.player_x = 100
+        self.player_y = 100
+        self.player_hp = 1
+        self.enemy_hp = 40
+        pyxel.init(WINDOW_W, WINDOW_H, caption="Boss")
+        pyxel.load("assets/Boss.pyxres")
 
         self.is_OP = True
         self.is_game_over = False
         self.is_game_clear = False
 
         # make instance
-        self.mpc = pc()
+        self.pc = pc()
         self.Balls = []
         self.Enemies = []
         self.lasers = []
 
-        # flag
-        self.flag = 3
-        self.GameOver_flag = 0
-
-        #
-        self.player_x = self.mpc.pos.x
-        self.player_y = self.mpc.pos.y
-        self.mpc.pos.x = self.mpc.pos.x
-        self.mpc.pos.y = self.mpc.pos.y
+        self.enemy_core = enemy.Enemy()
 
         pyxel.run(self.update, self.draw)
 
@@ -93,85 +71,75 @@ class App:
             self.score = 0
             self.__init__()
 
-        if self.player_hp == 0:
+        if self.player_hp < 0:
             self.is_game_over = True
 
-        if self.enemy_hp == 0:
+        if self.enemy_hp < 0:
             self.is_game_clear = True
 
         if self.is_OP:
-            if pyxel.btn(pyxel.constants.KEY_S):
+            if pyxel.btn(pyxel.KEY_S):
                 self.is_OP = False
             return
 
         if self.is_game_over or self.is_game_clear:
-            if pyxel.btn(pyxel.constants.KEY_Q):
+            if pyxel.btn(pyxel.KEY_Q):
                 pyxel.quit()
-            if pyxel.btn(pyxel.constants.KEY_R):
+            if pyxel.btn(pyxel.KEY_R):
                 self.__init__()
             return
-        self.mpc.pos.x = self.player_x
-        self.mpc.pos.y = self.player_y
+        self.pc.pos.x = self.player_x
+        self.pc.pos.y = self.player_y
 
         self.player_y = min(self.player_y + 4, 95)
-        # ====== ctrl pc ======
-        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD_1_LEFT):
-            self.player_x = max(self.player_x - 4, 5)
 
-        if pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.GAMEPAD_1_RIGHT):
-            self.player_x = min(self.player_x + 4, 130)
+        self.ctrl_enemy()
+        self.ctrl_ball()
+        self.ctrl_pc()
 
-        if pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD_1_UP):
-            self.player_y = max(self.player_y - 12, 5)
-
-        dx = self.player_x - self.mpc.pos.x  # x軸方向の移動量(マウス座標 - cat座標)
-        dy = self.player_y - self.mpc.pos.y  # y軸方向の移動量(マウス座標 - cat座標)
-
-        if dx != 0:
-            self.mpc.update(self.player_x, self.player_y, dx)  # 座標と向きを更新
-        elif dy != 0:
-            self.mpc.update(self.player_x, self.player_y,
-                            self.mpc.vec)  # 座標のみ更新（真上or真下に移動）
-
+    def ctrl_enemy(self):
         # ====== ctrl enemy ======
+        # enemy_coreの移動
+        self.enemy_core.update(abs(math.sin(time.time()/2)) * 140, 20, 1)
+       # print((abs(math.sin(time.time()))))
 
-        if self.flag > 0:  # 1匹の敵キャラを実体化
-            new_enemy = Enemy()
+        # 1匹の敵キャラを実体化
+        if len(self.Enemies) < 20:
+            new_enemy = enemy.Enemy()
             new_enemy.update(random.randrange(WINDOW_W),
-                             random.randrange(WINDOW_H), self.mpc.vec)
+                             random.randrange(WINDOW_H), self.pc.vec)
             self.Enemies.append(new_enemy)
-
-            self.flag -= 1
 
         enemy_count = len(self.Enemies)
         for i in range(enemy_count):
             # 当たり判定(敵キャラと猫)
-            if ((self.mpc.pos.x < self.Enemies[i].pos.x + ENEMY_W)
-                and (self.Enemies[i].pos.x + ENEMY_W < self.mpc.pos.x + PC_W)
-                and (self.mpc.pos.y < self.Enemies[i].pos.y + ENEMY_H)
-                    and (self.Enemies[i].pos.y + ENEMY_H < self.mpc.pos.y + PC_H)):
+            if ((self.pc.pos.x < self.Enemies[i].pos.x + ENEMY_W)
+                and (self.Enemies[i].pos.x + ENEMY_W < self.pc.pos.x + PC_W)
+                and (self.pc.pos.y < self.Enemies[i].pos.y + ENEMY_H)
+                    and (self.Enemies[i].pos.y + ENEMY_H < self.pc.pos.y + PC_H)):
                 self.player_hp -= 1
 
             # P制御
-            ex = (self.mpc.pos.x - self.Enemies[i].pos.x)
-            ey = (self.mpc.pos.y - self.Enemies[i].pos.y)
+            ex = (self.enemy_core.pos.x - self.Enemies[i].pos.x)
+            ey = (self.enemy_core.pos.y - self.Enemies[i].pos.y)
             Kp = self.Enemies[i].speed
             if ex != 0 or ey != 0:
                 self.Enemies[i].update(self.Enemies[i].pos.x + ex * Kp,
                                        self.Enemies[i].pos.y + ey * Kp,
-                                       self.mpc.vec)
+                                       self.pc.vec)
 
+    def ctrl_ball(self):
         # ====== ctrl Ball ======
-        if pyxel.btnp(pyxel.KEY_A):
+        if pyxel.btnp(pyxel.KEY_A) or pyxel.btn(pyxel.GAMEPAD_1_A):
             new_ball = Ball()
-            if self.mpc.vec > 0:
-                new_ball.update(self.mpc.pos.x + PC_W/2 + 6,
-                                self.mpc.pos.y + PC_H/2,
-                                self.mpc.vec, new_ball.size, new_ball.color)
+            if self.pc.vec > 0:
+                new_ball.update(self.pc.pos.x + PC_W/2 + 6,
+                                self.pc.pos.y + PC_H/2,
+                                self.pc.vec, new_ball.size, new_ball.color)
             else:
-                new_ball.update(self.mpc.pos.x + PC_W/2 - 6,
-                                self.mpc.pos.y + PC_H/2,
-                                self.mpc.vec, new_ball.size, new_ball.color)
+                new_ball.update(self.pc.pos.x + PC_W/2 - 6,
+                                self.pc.pos.y + PC_H/2,
+                                self.pc.vec, new_ball.size, new_ball.color)
             self.Balls.append(new_ball)
 
         ball_count = len(self.Balls)
@@ -194,13 +162,33 @@ class App:
                         and (self.Enemies[j].pos.y < self.Balls[i].pos.y)
                             and (self.Balls[i].pos.y < self.Enemies[j].pos.y + ENEMY_H)):
                         # 消滅(敵インスタンス破棄)
-                        del self.Enemies[j]
+                      #  del self.Enemies[j] enemyは体力性にする
                         self.enemy_hp -= 2
                         self.flag = 1
                         break
             else:
                 del self.Balls[i]
                 break
+
+    def ctrl_pc(self):
+        # ====== ctrl pc ======
+        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD_1_LEFT):
+            self.player_x = max(self.player_x - 4, 5)
+
+        if pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.GAMEPAD_1_RIGHT):
+            self.player_x = min(self.player_x + 4, 130)
+
+        if pyxel.btn(pyxel.KEY_B) or pyxel.btn(pyxel.GAMEPAD_1_B):
+            self.player_y = max(self.player_y - 10, 5)
+
+        dx = self.player_x - self.pc.pos.x  # x軸方向の移動量(マウス座標 - cat座標)
+        dy = self.player_y - self.pc.pos.y  # y軸方向の移動量(マウス座標 - cat座標)
+
+        if dx != 0:
+            self.pc.update(self.player_x, self.player_y, dx)  # 座標と向きを更新
+        elif dy != 0:
+            self.pc.update(self.player_x, self.player_y,
+                           self.pc.vec)  # 座標のみ更新（真上or真下に移動）
 
     def draw(self):
         if self.is_OP:
@@ -216,14 +204,12 @@ class App:
             return
 
         pyxel.cls(0)
-      #  pyxel.text(55, 40, "Are you Kururu?", pyxel.frame_count % 16)
-     #   pyxel.blt(self.IMG_ID0_X, self.IMG_ID0_Y, self.IMG_ID0, 0, 0, 38, 16)
 
         # ======= draw pc ========
-        if self.mpc.vec > 0:
-            pyxel.blt(self.mpc.pos.x, self.mpc.pos.y, 0, 0, 0, 16, 16, 1)
+        if self.pc.vec > 0:
+            pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 0, 16, 16, 1)
         else:
-            pyxel.blt(self.mpc.pos.x, self.mpc.pos.y, 0, 0, 16, 16, 16, 1)
+            pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 16, 16, 16, 1)
 
         # ====== draw Balls ======
         for ball in self.Balls:
@@ -231,24 +217,21 @@ class App:
 
         # ====== draw enemy ======
         for enemy in self.Enemies:
-            #        print("a")
             if enemy.vec > 0:
-             #           print("a")
                 pyxel.blt(enemy.pos.x, enemy.pos.y, 0, 16, 0, 16, 16, 1)
             else:
                 pyxel.blt(enemy.pos.x, enemy.pos.y, 0, 16, 0, 16, 16, 1)
+        pyxel.blt(self.enemy_core.pos.x,
+                  self.enemy_core.pos.y, 0, 32, 0, 16, 16, 1)
 
         # draw_player_hp
-        for i in range(self.player_hp):
-            pyxel.line(5+i*2, 110, 5+i*2, 113, 10)
+      #  for i in range(self.player_hp):
+      #      pyxel.line(5+i*2, 110, 5+i*2, 113, 10)
 
         # draw_enemy_hp
+        pyxel.text(30,110,"E",8)
         for i in range(self.enemy_hp):
-            pyxel.line(75+i*2, 110, 75+i*2, 113, 11)
-
-        # ====== draw game over ======
-        if self.GameOver_flag == 1:
-            pyxel.text(self.mpc.pos.x - 10, self.mpc.pos.y - 5, "GAME OVER", 8)
+            pyxel.line(40+i*2, 110, 40+i*2, 113, 8)
 
     def draw_OP(self):
         pyxel.cls(5)
