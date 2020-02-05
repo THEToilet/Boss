@@ -4,6 +4,7 @@ import time
 import math
 import Enemy as enemy
 import Vector2 as vec2
+import Collide
 
 WINDOW_H = 120
 WINDOW_W = 150
@@ -17,6 +18,7 @@ class pc:
     def __init__(self):
         self.pos = vec2.Vec2(10, 95)
         self.vec = 0
+        self.d = 0
 
     def update(self, x, y, dx):
         self.pos.x = x
@@ -44,8 +46,8 @@ class App:
     def __init__(self):
         self.player_x = 100
         self.player_y = 100
-        self.player_hp = 1
-        self.enemy_hp = 40
+        self.player_hp = 1000000
+        self.enemy_hp = 10
         pyxel.init(WINDOW_W, WINDOW_H, caption="Boss")
         pyxel.load("assets/Boss.pyxres")
 
@@ -63,56 +65,32 @@ class App:
 
         pyxel.run(self.update, self.draw)
 
-    def update(self):
-        if pyxel.btnp(pyxel.KEY_Q):
-            pyxel.quit()
-
-        if pyxel.btnp(pyxel.KEY_R):
-            self.score = 0
-            self.__init__()
-
-        if self.player_hp < 0:
-            self.is_game_over = True
-
-        if self.enemy_hp < 0:
-            self.is_game_clear = True
-
-        if self.is_OP:
-            if pyxel.btn(pyxel.KEY_S):
-                self.is_OP = False
-            return
-
-        if self.is_game_over or self.is_game_clear:
-            if pyxel.btn(pyxel.KEY_Q):
-                pyxel.quit()
-            if pyxel.btn(pyxel.KEY_R):
-                self.__init__()
-            return
-        self.pc.pos.x = self.player_x
-        self.pc.pos.y = self.player_y
-
-        self.player_y = min(self.player_y + 4, 95)
-
-        self.ctrl_enemy()
-        self.ctrl_ball()
-        self.ctrl_pc()
+ #   def follow_pc(self,enemy):
+ # dx = self.pc.pos.x - self.enemy.pos.x
+ #       dy = self.pc.pos.y - self.enemy.pos.y
+ #       distance = Collide.distance(self.pc.pos.x, self.pc.pos.y, self.enemy.pos.x, self.enemy.pos.y)
+ #       self.enemy.pos.x =
 
     def ctrl_enemy(self):
         # ====== ctrl enemy ======
         # enemy_coreの移動
-        self.enemy_core.update(abs(math.sin(time.time()/2)) * 140, 20, 1)
+        # self.enemy_core.update(abs(math.sin(pyxel.frame_count/50)) * 140, 20, 1)
+        #    self.enemy_core.update(60,abs(math.sin(pyxel.frame_count/50)) * 100, 1)
+       # self.enemy_core.update(abs(math.cos(pyxel.frame_count/50)) * 100,abs(math.sin(pyxel.frame_count/50)) * 100, 1)
+        self.enemy_core.update((math.sin(pyxel.frame_count/40))
+                               * 40 + 60, (math.cos(pyxel.frame_count/40)) * 40 + 60, 1)
        # print((abs(math.sin(time.time()))))
 
         # 1匹の敵キャラを実体化
         if len(self.Enemies) < 20:
             new_enemy = enemy.Enemy()
-            new_enemy.update(random.randrange(WINDOW_W),
-                             random.randrange(WINDOW_H), self.pc.vec)
+            new_enemy.update(self.pc.pos.x/(random.randrange(10)+1),
+                             self.pc.pos.y/(random.randrange(10)+1), self.pc.vec)
             self.Enemies.append(new_enemy)
 
         enemy_count = len(self.Enemies)
         for i in range(enemy_count):
-            # 当たり判定(敵キャラと猫)
+            # 当たり判定
             if ((self.pc.pos.x < self.Enemies[i].pos.x + ENEMY_W)
                 and (self.Enemies[i].pos.x + ENEMY_W < self.pc.pos.x + PC_W)
                 and (self.pc.pos.y < self.Enemies[i].pos.y + ENEMY_H)
@@ -124,9 +102,15 @@ class App:
             ey = (self.enemy_core.pos.y - self.Enemies[i].pos.y)
             Kp = self.Enemies[i].speed
             if ex != 0 or ey != 0:
-                self.Enemies[i].update(self.Enemies[i].pos.x + ex * Kp,
-                                       self.Enemies[i].pos.y + ey * Kp,
-                                       self.pc.vec)
+                if self.Enemies[i] == pc or not Collide.collide_with_other_enemies(self.Enemies, self.Enemies[i], 2):
+                    self.Enemies[i].update(
+                        self.Enemies[i].pos.x, self.Enemies[i].pos.y, self.pc.vec)
+                    print("if")
+                else:
+                    print("else")
+                    self.Enemies[i].update(self.Enemies[i].pos.x + ex * Kp,
+                                           self.Enemies[i].pos.y + ey * Kp,
+                                           self.pc.vec)
 
     def ctrl_ball(self):
         # ====== ctrl Ball ======
@@ -181,14 +165,65 @@ class App:
         if pyxel.btn(pyxel.KEY_B) or pyxel.btn(pyxel.GAMEPAD_1_B):
             self.player_y = max(self.player_y - 10, 5)
 
-        dx = self.player_x - self.pc.pos.x  # x軸方向の移動量(マウス座標 - cat座標)
-        dy = self.player_y - self.pc.pos.y  # y軸方向の移動量(マウス座標 - cat座標)
+        dx = self.player_x - self.pc.pos.x  # x軸方向の移動量
+        dy = self.player_y - self.pc.pos.y  # y軸方向の移動量
+
+        if abs(dx) > abs(dy):
+            if dx < 0:
+                self.pc.d = 1
+            if dx > 0:
+                self.pc.d = 2
+        else:
+            if dy < 0:
+                self.pc.d = 3
+            if dy > 0:
+                self.pc.d = 4
+
+        if abs(dx-dy) == 0:
+            self.pc.d = 0
+
+        if pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD_1_DOWN):
+            self.pc.d = 4
 
         if dx != 0:
             self.pc.update(self.player_x, self.player_y, dx)  # 座標と向きを更新
         elif dy != 0:
             self.pc.update(self.player_x, self.player_y,
                            self.pc.vec)  # 座標のみ更新（真上or真下に移動）
+
+    def update(self):
+        if pyxel.btnp(pyxel.KEY_Q):
+            pyxel.quit()
+
+        if pyxel.btnp(pyxel.KEY_R):
+            self.score = 0
+            self.__init__()
+
+        if self.player_hp < 0:
+            self.is_game_over = True
+
+        if self.enemy_hp < 0:
+            self.is_game_clear = True
+
+        if self.is_OP:
+            if pyxel.btn(pyxel.KEY_S):
+                self.is_OP = False
+            return
+
+        if self.is_game_over or self.is_game_clear:
+            if pyxel.btn(pyxel.KEY_Q):
+                pyxel.quit()
+            if pyxel.btn(pyxel.KEY_R):
+                self.__init__()
+            return
+        self.pc.pos.x = self.player_x
+        self.pc.pos.y = self.player_y
+
+        self.player_y = min(self.player_y + 3, 93)
+
+        self.ctrl_enemy()
+        self.ctrl_ball()
+        self.ctrl_pc()
 
     def draw(self):
         if self.is_OP:
@@ -203,14 +238,19 @@ class App:
             self.draw_clear_screen()
             return
 
-        pyxel.cls(0)
+        pyxel.cls(7)
 
         # ======= draw pc ========
-        if self.pc.vec > 0:
+        if self.pc.d == 1:
             pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 0, 16, 16, 1)
-        else:
+        elif self.pc.d == 2:
             pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 16, 16, 16, 1)
-
+        elif self.pc.d == 3:
+            pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 32, 16, 16, 1)
+        elif self.pc.d == 4:
+            pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 48, 16, 16, 1)
+        if self.pc.d == 0:
+            pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 0, 16, 16, 1)
         # ====== draw Balls ======
         for ball in self.Balls:
             pyxel.circ(ball.pos.x, ball.pos.y, ball.size, ball.color)
@@ -229,7 +269,7 @@ class App:
       #      pyxel.line(5+i*2, 110, 5+i*2, 113, 10)
 
         # draw_enemy_hp
-        pyxel.text(30,110,"E",8)
+        pyxel.text(30, 110, "E", 8)
         for i in range(self.enemy_hp):
             pyxel.line(40+i*2, 110, 40+i*2, 113, 8)
 
