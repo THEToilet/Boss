@@ -77,15 +77,15 @@ class App:
         # self.enemy_core.update(abs(math.sin(pyxel.frame_count/50)) * 140, 20, 1)
         #    self.enemy_core.update(60,abs(math.sin(pyxel.frame_count/50)) * 100, 1)
        # self.enemy_core.update(abs(math.cos(pyxel.frame_count/50)) * 100,abs(math.sin(pyxel.frame_count/50)) * 100, 1)
-        self.enemy_core.update((math.sin(pyxel.frame_count/40))
-                               * 40 + 60, (math.cos(pyxel.frame_count/40)) * 40 + 60, 1)
+        self.enemy_core.update((math.sin(pyxel.frame_count/30))
+                               * 30 + 75, (math.cos(pyxel.frame_count/30)) * 30 + 60, self.enemy_core.vec)
        # print((abs(math.sin(time.time()))))
 
         # 1匹の敵キャラを実体化
-        if len(self.Enemies) < 20:
+        if len(self.Enemies) < 8:
             new_enemy = enemy.Enemy()
-            new_enemy.update(self.pc.pos.x/(random.randrange(10)+1),
-                             self.pc.pos.y/(random.randrange(10)+1), self.pc.vec)
+            new_enemy.update(self.enemy_core.pos.x*(math.sin(pyxel.frame_count/30)),
+                             self.enemy_core.pos.y*(math.cos(pyxel.frame_count/30)), self.pc.vec)
             self.Enemies.append(new_enemy)
 
         enemy_count = len(self.Enemies)
@@ -100,17 +100,17 @@ class App:
             # P制御
             ex = (self.enemy_core.pos.x - self.Enemies[i].pos.x)
             ey = (self.enemy_core.pos.y - self.Enemies[i].pos.y)
-            Kp = self.Enemies[i].speed
+            Kp = self.Enemies[i].speed*2
             if ex != 0 or ey != 0:
-                if self.Enemies[i] == pc or not Collide.collide_with_other_enemies(self.Enemies, self.Enemies[i], 2):
-                    self.Enemies[i].update(
-                        self.Enemies[i].pos.x, self.Enemies[i].pos.y, self.pc.vec)
-                    print("if")
-                else:
-                    print("else")
-                    self.Enemies[i].update(self.Enemies[i].pos.x + ex * Kp,
-                                           self.Enemies[i].pos.y + ey * Kp,
-                                           self.pc.vec)
+                # if Collide.collide_with_other_enemies(self.Enemies, self.Enemies[i], 5):
+                #    self.Enemies[i].update(
+                #        self.enemy_core.pos.x*random.randint(0, 5), self.enemy_core.pos.y*random.randint(0, 5), self.enemy_core.vec)
+                # print("if")
+                # else:
+                # print("else")
+                self.Enemies[i].update((math.sin(pyxel.frame_count/30 * i)) * (30*(math.sin(pyxel.frame_count/50))) + self.enemy_core.pos.x,
+                                       (math.cos(pyxel.frame_count/30 * i)) * (30*(math.sin(pyxel.frame_count/50))) + self.enemy_core.pos.y,
+                                       self.enemy_core.vec)
 
     def ctrl_ball(self):
         # ====== ctrl Ball ======
@@ -146,8 +146,9 @@ class App:
                         and (self.Enemies[j].pos.y < self.Balls[i].pos.y)
                             and (self.Balls[i].pos.y < self.Enemies[j].pos.y + ENEMY_H)):
                         # 消滅(敵インスタンス破棄)
-                      #  del self.Enemies[j] enemyは体力性にする
-                        self.enemy_hp -= 2
+                        del self.Enemies[j] 
+                        #enemyは体力性にする
+                        self.enemy_hp -= 0
                         self.flag = 1
                         break
             else:
@@ -214,11 +215,12 @@ class App:
             if pyxel.btn(pyxel.KEY_Q):
                 pyxel.quit()
             if pyxel.btn(pyxel.KEY_R):
-                self.__init__()
-            return
+                return
+
         self.pc.pos.x = self.player_x
         self.pc.pos.y = self.player_y
 
+        # 最小値playerの
         self.player_y = min(self.player_y + 3, 93)
 
         self.ctrl_enemy()
@@ -256,14 +258,15 @@ class App:
             pyxel.circ(ball.pos.x, ball.pos.y, ball.size, ball.color)
 
         # ====== draw enemy ======
+
         for enemy in self.Enemies:
             if enemy.vec > 0:
                 pyxel.blt(enemy.pos.x, enemy.pos.y, 0, 16, 0, 16, 16, 1)
             else:
                 pyxel.blt(enemy.pos.x, enemy.pos.y, 0, 16, 0, 16, 16, 1)
+
         pyxel.blt(self.enemy_core.pos.x,
                   self.enemy_core.pos.y, 0, 32, 0, 16, 16, 1)
-
         # draw_player_hp
       #  for i in range(self.player_hp):
       #      pyxel.line(5+i*2, 110, 5+i*2, 113, 10)

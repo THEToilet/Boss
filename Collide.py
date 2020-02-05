@@ -2,16 +2,14 @@ import math
 
 
 def distance(x1, y1, x2, y2):
- #   print(math.sqrt(pow(x1-x2, 2)+pow(y1-y2, 2)))
+   # print(math.sqrt(pow(x1-x2, 2)+pow(y1-y2, 2)))
     return math.sqrt(pow(x1-x2, 2)+pow(y1-y2, 2))
 
 
 def collision(x1, y1, x2, y2, r):
     if distance(x1, y1, x2, y2) < r:
-        print("ct")
         return True
     else:
-        print("cf")
         return False
 
 
