@@ -74,11 +74,19 @@ class App:
     def ctrl_enemy(self):
         # ====== ctrl enemy ======
         # enemy_coreの移動
-        # self.enemy_core.update(abs(math.sin(pyxel.frame_count/50)) * 140, 20, 1)
-        #    self.enemy_core.update(60,abs(math.sin(pyxel.frame_count/50)) * 100, 1)
-       # self.enemy_core.update(abs(math.cos(pyxel.frame_count/50)) * 100,abs(math.sin(pyxel.frame_count/50)) * 100, 1)
-        self.enemy_core.update((math.sin(pyxel.frame_count/30))
-                               * 30 + 75, (math.cos(pyxel.frame_count/30)) * 30 + 60, self.enemy_core.vec)
+        if pyxel.frame_count > 1500:
+            self.enemy_core.update((math.sin(pyxel.frame_count/30))
+                                   * 30 + 75, (math.cos(pyxel.frame_count/30)) * 30 + 60, self.enemy_core.vec)
+        elif pyxel.frame_count > 1000:
+            self.enemy_core.update(
+                abs(math.sin(pyxel.frame_count/50)) * 140, 20, 1)
+        elif pyxel.frame_count > 500:
+            self.enemy_core.update(
+                60, abs(math.sin(pyxel.frame_count/50)) * 100, 1)
+        elif pyxel.frame_count > 0:
+            self.enemy_core.update(abs(math.cos(
+                pyxel.frame_count/50)) * 100, abs(math.sin(pyxel.frame_count/50)) * 100, 1)
+
        # print((abs(math.sin(time.time()))))
 
         # 1匹の敵キャラを実体化
@@ -109,7 +117,8 @@ class App:
                 # else:
                 # print("else")
                 self.Enemies[i].update((math.sin(pyxel.frame_count/30 * i)) * (30*(math.sin(pyxel.frame_count/50))) + self.enemy_core.pos.x,
-                                       (math.cos(pyxel.frame_count/30 * i)) * (30*(math.sin(pyxel.frame_count/50))) + self.enemy_core.pos.y,
+                                       (math.cos(pyxel.frame_count/30 * i)) * (30 *
+                                                                               (math.sin(pyxel.frame_count/50))) + self.enemy_core.pos.y,
                                        self.enemy_core.vec)
 
     def ctrl_ball(self):
@@ -146,8 +155,8 @@ class App:
                         and (self.Enemies[j].pos.y < self.Balls[i].pos.y)
                             and (self.Balls[i].pos.y < self.Enemies[j].pos.y + ENEMY_H)):
                         # 消滅(敵インスタンス破棄)
-                        del self.Enemies[j] 
-                        #enemyは体力性にする
+                        del self.Enemies[j]
+                        # enemyは体力性にする
                         self.enemy_hp -= 0
                         self.flag = 1
                         break
