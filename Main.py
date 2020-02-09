@@ -9,6 +9,7 @@ import Player as pc
 import Bullet as bullet
 import Collide
 import Particle as ptcl
+import ItemGeneration as item_gene
 
 WINDOW_H = 120
 WINDOW_W = 200
