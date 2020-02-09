@@ -8,6 +8,7 @@ import Vector2 as vec2
 import Player as pc
 import Bullet as bullet
 import Collide
+import Particle as ptcl
 
 WINDOW_H = 120
 WINDOW_W = 150
@@ -20,6 +21,7 @@ STAGE_LEFT = 5
 STAGE_TOP = 5
 STAGE_BOTTOM = 93
 ENEMIS_TOTAL = 8
+
 
 class App:
     def __init__(self):
@@ -38,6 +40,7 @@ class App:
         self.pc = pc.pc()
         self.Balls = []
         self.Enemies = []
+        self.Particles = []
         self.enemy_core = enemy.Enemy()
 
         pyxel.run(self.update, self.draw)
@@ -95,7 +98,7 @@ class App:
                                 self.pc.vec, new_ball.size, new_ball.color)
             elif self.pc.direction == 5:
                 new_ball.update(self.pc.pos.x + PC_W/2,
-                                self.pc.pos.y + PC_H/2 -6,
+                                self.pc.pos.y + PC_H/2 - 6,
                                 self.pc.vec, new_ball.size, new_ball.color)
             self.Balls.append(new_ball)
 
@@ -119,9 +122,13 @@ class App:
                         and (self.Enemies[j].pos.y < self.Balls[i].pos.y)
                             and (self.Balls[i].pos.y < self.Enemies[j].pos.y + ENEMY_H)):
                         # 消滅(敵インスタンス破棄)
-                        del self.Enemies[j]
                         # enemyは体力性にする
                         self.enemy_hp -= 0
+                        # パーティクル生成
+                        for i in range(random.randint(1,5)):
+                            new_particle = ptcl.Ptcl(self.Enemies[j].pos.x,self.Enemies[j].pos.y)
+                            self.Particles.append(new_particle)
+                        del self.Enemies[j]
                         break
             else:
                 del self.Balls[i]
@@ -131,9 +138,6 @@ class App:
         # ====== ctrl pc ======
         dx = self.player_x - self.pc.pos.x  # x軸方向の移動量
         dy = self.player_y - self.pc.pos.y  # y軸方向の移動量
-
-        if abs(dx-dy) == 0:  # なにもしない
-            self.pc.direction = 0
 
         if pyxel.btn(pyxel.KEY_B) or pyxel.btn(pyxel.GAMEPAD_1_B):  # JUMP
             self.player_y = max(self.player_y - 10, STAGE_TOP)
@@ -187,6 +191,10 @@ class App:
         # player.yの最小値
         self.player_y = min(self.player_y + 3, STAGE_BOTTOM)
 
+        for particle in self.Particles:
+            particle.update()
+
+
         self.ctrl_enemy()
         self.ctrl_ball()
         self.ctrl_pc()
@@ -211,7 +219,6 @@ class App:
             pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 0, 16, 16, 1)
         if self.pc.direction == 1:
             pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 48, 16, 16, 1)
-            pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 0, 16, 16, 1)
         if self.pc.direction == 2:
             pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 48, 16, 16, 1)
         if self.pc.direction == 3:
@@ -223,6 +230,9 @@ class App:
         for ball in self.Balls:
             pyxel.circ(ball.pos.x, ball.pos.y, ball.size, ball.color)
 
+        # ====== draw Patrticle =====#
+        for particle in self.Particles:
+            pyxel.circ(particle.pos.x, particle.pos.y, particle.r, 3)
         # ====== draw enemy ======
 
         for enemy in self.Enemies:
