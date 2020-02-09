@@ -11,12 +11,12 @@ import Collide
 import Particle as ptcl
 
 WINDOW_H = 120
-WINDOW_W = 150
+WINDOW_W = 200
 PC_H = 16
 PC_W = 8
 ENEMY_H = 16
 ENEMY_W = 16
-STAGE_RIGHT = 130  # ステージの右端
+STAGE_RIGHT = 190  # ステージの右端
 STAGE_LEFT = 5
 STAGE_TOP = 5
 STAGE_BOTTOM = 93
@@ -25,12 +25,13 @@ ENEMIS_TOTAL = 8
 
 class App:
     def __init__(self):
-        self.player_x = 100
-        self.player_y = 100
-        self.player_hp = 1
-        self.enemy_hp = 10
         pyxel.init(WINDOW_W, WINDOW_H, caption="Boss")
         pyxel.load("assets/Boss.pyxres")
+
+        self.player_x = 100
+        self.player_y = 100
+        self.player_hp = 10
+        self.enemy_hp = 100
 
         self.is_OP = True
         self.is_game_over = False
@@ -46,27 +47,26 @@ class App:
         pyxel.run(self.update, self.draw)
 
     def ctrl_enemy(self):
-        # ====== ctrl enemy ======
-
+        # ====== ctrl enemy ====== #
         # enemy_coreの移動
         if pyxel.frame_count > 1500:
             self.enemy_core.update((math.sin(pyxel.frame_count/30))
-                                   * 30 + 75, (math.cos(pyxel.frame_count/30)) * 30 + 60, self.enemy_core.vec)
+                                   * 30 + 75, (math.cos(pyxel.frame_count/30)) * 30 + 60)
         elif pyxel.frame_count > 1000:
             self.enemy_core.update(
-                abs(math.sin(pyxel.frame_count/50)) * 140, 20, 1)
+                abs(math.sin(pyxel.frame_count/50)) * 140, 20)
         elif pyxel.frame_count > 500:
             self.enemy_core.update(
-                60, abs(math.sin(pyxel.frame_count/50)) * 100, 1)
+                60, abs(math.sin(pyxel.frame_count/50)) * 100)
         elif pyxel.frame_count > 0:
             self.enemy_core.update(abs(math.cos(
-                pyxel.frame_count/50)) * 100, abs(math.sin(pyxel.frame_count/50)) * 100, 1)
+                pyxel.frame_count/50)) * 100, abs(math.sin(pyxel.frame_count/50)) * 100)
 
         # 周りの匹の敵キャラを実体化
         if len(self.Enemies) <= ENEMIS_TOTAL:
             new_enemy = enemy.Enemy()
             new_enemy.update(self.enemy_core.pos.x*(math.sin(pyxel.frame_count/30)),
-                             self.enemy_core.pos.y*(math.cos(pyxel.frame_count/30)), self.pc.vec)
+                             self.enemy_core.pos.y*(math.cos(pyxel.frame_count/30)))
             self.Enemies.append(new_enemy)
 
         enemy_count = len(self.Enemies)
@@ -81,38 +81,45 @@ class App:
             # enemies動き
             self.Enemies[i].update((math.sin(pyxel.frame_count/30 * i)) * (30*(math.sin(pyxel.frame_count/50))) + self.enemy_core.pos.x,
                                    (math.cos(pyxel.frame_count/30 * i)) * (30 *
-                                                                           (math.sin(pyxel.frame_count/50))) + self.enemy_core.pos.y,
-                                   self.enemy_core.vec)
+                                                                           (math.sin(pyxel.frame_count/50))) + self.enemy_core.pos.y)
 
     def ctrl_ball(self):
         # ====== ctrl Ball ======
         if pyxel.btnp(pyxel.KEY_A) or pyxel.btn(pyxel.GAMEPAD_1_A):
             new_ball = bullet.Bullet()
             if self.pc.direction == 3:
-                new_ball.update(self.pc.pos.x + PC_W/2 + 6,
-                                self.pc.pos.y + PC_H/2,
-                                self.pc.vec, new_ball.size, new_ball.color)
-            elif self.pc.direction == 4:
                 new_ball.update(self.pc.pos.x + PC_W/2 - 6,
                                 self.pc.pos.y + PC_H/2,
                                 self.pc.vec, new_ball.size, new_ball.color)
-            elif self.pc.direction == 5:
+                new_ball.direction = 3
+            if self.pc.direction == 4:
+                new_ball.update(self.pc.pos.x + PC_W/2 + 6,
+                                self.pc.pos.y + PC_H/2,
+                                self.pc.vec, new_ball.size, new_ball.color)
+                new_ball.direction = 4
+            if self.pc.direction == 5:
                 new_ball.update(self.pc.pos.x + PC_W/2,
                                 self.pc.pos.y + PC_H/2 - 6,
                                 self.pc.vec, new_ball.size, new_ball.color)
+                new_ball.direction = 5
             self.Balls.append(new_ball)
 
         ball_count = len(self.Balls)
         for i in range(ball_count):
             if 0 < self.Balls[i].pos.x and self.Balls[i].pos.x < WINDOW_W:
                 # Ball update
-                if self.Balls[i].vec > 0:
+                if self.Balls[i].direction == 3:
                     self.Balls[i].update(self.Balls[i].pos.x + self.Balls[i].speed,
                                          self.Balls[i].pos.y,
                                          self.Balls[i].vec, self.Balls[i].size, self.Balls[i].color)
-                else:
+                if self.Balls[i].direction == 4:
                     self.Balls[i].update(self.Balls[i].pos.x - self.Balls[i].speed,
                                          self.Balls[i].pos.y,
+                                         self.Balls[i].vec, self.Balls[i].size, self.Balls[i].color)
+                if self.Balls[i].direction == 5:
+                    self.Balls[i].update(self.Balls[i].pos.x,
+                                         self.Balls[i].pos.y -
+                                         self.Balls[i].speed,
                                          self.Balls[i].vec, self.Balls[i].size, self.Balls[i].color)
               #  当たり判定(敵キャラとボール)
                 enemy_count = len(self.Enemies)
@@ -125,8 +132,9 @@ class App:
                         # enemyは体力性にする
                         self.enemy_hp -= 0
                         # パーティクル生成
-                        for i in range(random.randint(1,5)):
-                            new_particle = ptcl.Ptcl(self.Enemies[j].pos.x,self.Enemies[j].pos.y)
+                        for i in range(random.randint(1, 5)):
+                            new_particle = ptcl.Ptcl(
+                                self.Enemies[j].pos.x, self.Enemies[j].pos.y)
                             self.Particles.append(new_particle)
                         del self.Enemies[j]
                         break
@@ -140,7 +148,7 @@ class App:
         dy = self.player_y - self.pc.pos.y  # y軸方向の移動量
 
         if pyxel.btn(pyxel.KEY_B) or pyxel.btn(pyxel.GAMEPAD_1_B):  # JUMP
-            self.player_y = max(self.player_y - 10, STAGE_TOP)
+            self.player_y = max(self.player_y - 5, STAGE_TOP)
             self.pc.direction = 1
 
         if pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD_1_DOWN):  # DOWN
@@ -168,12 +176,12 @@ class App:
             pyxel.quit()
 
         if self.is_OP:
-            if pyxel.btn(pyxel.KEY_S):
+            if pyxel.btn(pyxel.KEY_S) or pyxel.btn(pyxel.GAMEPAD_1_A):
                 self.is_OP = False
             return
 
         if self.is_game_over or self.is_game_clear:
-            if pyxel.btn(pyxel.KEY_Q):
+            if pyxel.btn(pyxel.KEY_Q) or pyxel.btn(pyxel.GAMEPAD_1_A):
                 pyxel.quit()
             if pyxel.btn(pyxel.KEY_R):
                 return
@@ -189,11 +197,12 @@ class App:
         self.pc.pos.y = self.player_y
 
         # player.yの最小値
-        self.player_y = min(self.player_y + 3, STAGE_BOTTOM)
+        self.player_y = min(self.player_y + 2, STAGE_BOTTOM)
 
-        for particle in self.Particles:
-            particle.update()
-
+        for i in range(len(self.Particles)):
+            self.Particles[i].update()
+   #         if self.Particles[i].life == 0:
+            #  del self.Particles[i]
 
         self.ctrl_enemy()
         self.ctrl_ball()
@@ -218,13 +227,15 @@ class App:
         if self.pc.direction == 0:
             pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 0, 16, 16, 1)
         if self.pc.direction == 1:
-            pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 48, 16, 16, 1)
+            pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 0, 16, 16, 1)
         if self.pc.direction == 2:
             pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 48, 16, 16, 1)
         if self.pc.direction == 3:
             pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 16, 16, 16, 1)
         if self.pc.direction == 4:
             pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 32, 16, 16, 1)
+        if self.pc.direction == 5:
+            pyxel.blt(self.pc.pos.x, self.pc.pos.y, 0, 0, 0, 16, 16, 1)
 
         # ====== draw Balls ======
         for ball in self.Balls:
@@ -258,7 +269,6 @@ class App:
         pyxel.text(59, 60, "START", 7)
 
     def draw_clear_screen(self):
-        pyxel.cls(2)
         pyxel.text(60, 60, "FINISH", 1)
         pyxel.text(59, 60, "FINISH", 7)
 

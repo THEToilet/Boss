@@ -7,6 +7,7 @@ class Bullet:
         self.size = 2
         self.speed = 3
         self.color = 8
+        self.direction = 0
 
     def update(self, x, y, dx, size, color):
         self.pos.x = x
