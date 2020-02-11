@@ -53,26 +53,50 @@ class App:
         self.player_particles = []
         self.Items = []
         self.enemy_core = enemy.Enemy()
+        self.enemy_move = enemymov.EnemyMove()
+
+        self.for_move_point = ENEMY_CORE_NORMAL_Y
+        self.origin_time = 0
+        self.orioir = 0
+        self.oni = 0
+        self.on = 0
 
         pyxel.run(self.update, self.draw)
 
     def ctrl_enemy(self):
         # ====== ctrl enemy ====== #
         # enemy_coreの移動
-        if pyxel.frame_count > 1500:
+        if pyxel.frame_count >= 2000:
+            self.enemy_core.update(
+                math.sin(self.on/30)
+                * -30 + 90, (math.cos(self.on/30)) * - 30 + 50)
+            self.on += 1
+        elif pyxel.frame_count >= 1800 and self.enemy_core.pos.y >= 20 and self.enemy_core.pos.y <= 21:
+            self.enemy_core.update(ENEMY_CORE_NORMAL_X, 20)
+        elif pyxel.frame_count >= 1200:
+            self.enemy_core.update(
+                ENEMY_CORE_NORMAL_X - math.sin(self.oni/50) * 70, 20 + abs(math.sin(self.oni/50)) * 50)
+            self.oni += 1
+        elif pyxel.frame_count >= 1000 and self.enemy_core.pos.y >= 20 and self.enemy_core.pos.y <= 21:
+            self.enemy_core.update(ENEMY_CORE_NORMAL_X, 20)
+        elif pyxel.frame_count >= 800:
+            self.enemy_core.update(
+                ENEMY_CORE_NORMAL_X, 20 + abs(math.sin(self.orioir/50)) * 50)
+            self.orioir += 1
+        elif pyxel.frame_count >= 600 and self.enemy_core.pos.x >= 89 and self.enemy_core.pos.x <= 91:
+            self.enemy_core.update(ENEMY_CORE_NORMAL_X, 20)
+        elif pyxel.frame_count >= 270:
+            self.enemy_core.update(
+                ENEMY_CORE_NORMAL_X - math.sin(self.origin_time/50) * 70, 20)
+            self.origin_time += 1
+        elif self.for_move_point <= 20 and pyxel.frame_count >= 120:
+            self.enemy_core.update(ENEMY_CORE_NORMAL_X, 20)
+        elif (pyxel.frame_count >= 80) and (self.for_move_point != 20):
+            self.enemy_core.update(ENEMY_CORE_NORMAL_X, self.for_move_point)
+            self.for_move_point = self.for_move_point - 0.5
+        elif(pyxel.frame_count >= 0):
             self.enemy_core.update(ENEMY_CORE_NORMAL_X, ENEMY_CORE_NORMAL_Y)
-
-     #       self.enemy_core.update((math.sin(pyxel.frame_count/30))
-     #                          * 30 + 75, (math.cos(pyxel.frame_count/30)) * 30 + 60)
-        elif pyxel.frame_count > 1000:
-            self.enemy_core.update(
-                abs(math.sin(pyxel.frame_count/50)) * 140, 20)
-        elif pyxel.frame_count > 500:
-            self.enemy_core.update(
-                60, abs(math.sin(pyxel.frame_count/50)) * 100)
-        elif pyxel.frame_count > 0:
-            self.enemy_core.update(abs(math.cos(
-                pyxel.frame_count/50)) * 100, abs(math.sin(pyxel.frame_count/50)) * 100)
+#        print(self.enemy_core.pos.y)
 
         # 周りの匹の敵キャラを実体化
         if len(self.Enemies) <= ENEMIS_TOTAL:
@@ -199,7 +223,6 @@ class App:
             self.once_left_push = False
             self.once_right_push = False
 
-
         if self.pc.is_floating:
 
             if(self.pc.pos.y >= STAGE_BOTTOM):
@@ -244,16 +267,16 @@ class App:
         enemy_particles_count = len(self.enemy_particles)
         for i in range(enemy_particles_count):
             self.enemy_particles[i].update()
-            if self.enemy_particles[i].life == 0:
-                del self.enemy_particles[i]
-                break
+           # if self.enemy_particles[i].life == 0:
+            #    del self.enemy_particles[i]
+            #    break
 
         player_particles_count = len(self.player_particles)
         for i in range(player_particles_count):
             self.player_particles[i].update()
-            if self.player_particles[i].life == 0:
-                del self.player_particles[i]
-                break
+          #  if self.player_particles[i].life == 0:
+          # 3#      del self.player_particles[i]
+           #    break
 
         self.ctrl_enemy()
         self.ctrl_ball()
