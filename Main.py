@@ -36,7 +36,7 @@ class App:
         self.player_y = 100
         self.player_dx = 0
         self.player_dy = 0
-        self.player_hp = 10
+        self.player_hp = 1000
         self.enemy_hp = 50
         self.pc_before_direction = 3
         self.is_jump = False
@@ -49,7 +49,8 @@ class App:
         self.pc = pc.pc()
         self.Balls = []
         self.Enemies = []
-        self.Particles = []
+        self.enemy_particles = []
+        self.player_particles = []
         self.Items = []
         self.enemy_core = enemy.Enemy()
 
@@ -88,6 +89,10 @@ class App:
                 and (self.pc.pos.y < self.Enemies[i].pos.y + ENEMY_H)
                     and (self.Enemies[i].pos.y + ENEMY_H < self.pc.pos.y + PC_H)):
                 self.player_hp -= 1
+                # パーティクル生成
+                for i in range(random.randint(3, 5)):
+                    new_particle = ptcl.Ptcl(self.pc.pos.x, self.pc.pos.y)
+                    self.player_particles.append(new_particle)
 
             # enemies動き
             self.Enemies[i].update((math.sin(pyxel.frame_count/30 * i)) * (30*(math.sin(pyxel.frame_count/50))) + self.enemy_core.pos.x,
@@ -143,10 +148,10 @@ class App:
                         # enemyは体力性にする
                         self.enemy_hp -= 0
                         # パーティクル生成
-                        for i in range(random.randint(1, 5)):
+                        for i in range(random.randint(3, 5)):
                             new_particle = ptcl.Ptcl(
                                 self.Enemies[j].pos.x, self.Enemies[j].pos.y)
-                            self.Particles.append(new_particle)
+                            self.enemy_particles.append(new_particle)
                      #   del self.Balls[i]
                         del self.Enemies[j]
                         break
@@ -236,11 +241,18 @@ class App:
         self.pc.pos.y = min(self.pc.pos.y, STAGE_BOTTOM)
       #  self.pc.pos.y = min(self.pc.pos.y ,STAGE_TOP)
 
-        particles_count = len(self.Particles)
-        for i in range(particles_count):
-            self.Particles[i].update()
-            if self.Particles[i].life == 0:
-                del self.Particles[i]
+        enemy_particles_count = len(self.enemy_particles)
+        for i in range(enemy_particles_count):
+            self.enemy_particles[i].update()
+            if self.enemy_particles[i].life == 0:
+                del self.enemy_particles[i]
+                break
+
+        player_particles_count = len(self.player_particles)
+        for i in range(player_particles_count):
+            self.player_particles[i].update()
+            if self.player_particles[i].life == 0:
+                del self.player_particles[i]
                 break
 
         self.ctrl_enemy()
@@ -281,8 +293,11 @@ class App:
             pyxel.circ(ball.pos.x, ball.pos.y, ball.size, ball.color)
 
         # ====== draw Patrticle =====#
-        for particle in self.Particles:
+        for particle in self.enemy_particles:
             pyxel.circ(particle.pos.x, particle.pos.y, particle.r, 3)
+
+        for particle in self.player_particles:
+            pyxel.circ(particle.pos.x, particle.pos.y, particle.r, 4)
         # ====== draw enemy ======
 
         for enemy in self.Enemies:

@@ -9,7 +9,7 @@ class Ptcl:
         self.vx = math.sin(x)
         self.vy = math.cos(y)
         self.r = random.randint(0, 2)
-        self.life = random.randint(7, 9)
+        self.life = random.randint(4, 5)
         self.direction = 0
         self.speed = 2
 
