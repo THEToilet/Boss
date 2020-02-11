@@ -147,8 +147,8 @@ class App:
                             new_particle = ptcl.Ptcl(
                                 self.Enemies[j].pos.x, self.Enemies[j].pos.y)
                             self.Particles.append(new_particle)
+                     #   del self.Balls[i]
                         del self.Enemies[j]
-                      #  del self.Balls[i]
                         break
 
             else:
@@ -161,8 +161,6 @@ class App:
         #    dy = self.player_y - self.pc.pos.y  # y軸方向の移動量
         self.once_left_push = False
         self.once_right_push = False
-
-        print(self.pc.is_floating)
 
         if (pyxel.btn(pyxel.KEY_B) or pyxel.btn(pyxel.GAMEPAD_1_B)) and not(self.pc.is_floating):  # JUMP
             self.pc.vy = -5
@@ -238,10 +236,12 @@ class App:
         self.pc.pos.y = min(self.pc.pos.y, STAGE_BOTTOM)
       #  self.pc.pos.y = min(self.pc.pos.y ,STAGE_TOP)
 
-        for i in range(len(self.Particles)):
+        particles_count = len(self.Particles)
+        for i in range(particles_count):
             self.Particles[i].update()
-   #         if self.Particles[i].life == 0:
-            #  del self.Particles[i]
+            if self.Particles[i].life == 0:
+                del self.Particles[i]
+                break
 
         self.ctrl_enemy()
         self.ctrl_ball()
