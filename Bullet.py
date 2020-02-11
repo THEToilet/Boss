@@ -6,7 +6,7 @@ class Bullet:
         self.vec = 0
         self.size = 2
         self.speed = 3
-        self.color = 8
+        self.color = 7
         self.direction = 0
 
     def update(self, x, y, dx, size, color):

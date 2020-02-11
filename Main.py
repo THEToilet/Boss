@@ -295,7 +295,7 @@ class App:
             self.draw_clear_screen()
             return
 
-        pyxel.cls(7)
+        pyxel.cls(13)
 
         # ======= draw pc ========
         if self.pc.direction == 0:
@@ -317,10 +317,10 @@ class App:
 
         # ====== draw Patrticle =====#
         for particle in self.enemy_particles:
-            pyxel.circ(particle.pos.x, particle.pos.y, particle.r, 3)
+            pyxel.circ(particle.pos.x, particle.pos.y, particle.r, 10)
 
         for particle in self.player_particles:
-            pyxel.circ(particle.pos.x, particle.pos.y, particle.r, 4)
+            pyxel.circ(particle.pos.x, particle.pos.y, particle.r, 8)
         # ====== draw enemy ======
 
         for enemy in self.Enemies:
@@ -329,8 +329,12 @@ class App:
             else:
                 pyxel.blt(enemy.pos.x, enemy.pos.y, 0, 16, 0, 16, 16, 1)
 
-        pyxel.blt(self.enemy_core.pos.x,
-                  self.enemy_core.pos.y, 0, 32, 0, 16, 16, 1)
+        if(math.sin(pyxel.frame_count/20) >=0 ):
+            pyxel.blt(self.enemy_core.pos.x,
+                    self.enemy_core.pos.y, 0, 32, 0, 16, 16, 1)
+        else:
+            pyxel.blt(self.enemy_core.pos.x,
+                    self.enemy_core.pos.y, 0, 32, 16, 16, 16, 1)
         # draw_player_hp
       #  for i in range(self.player_hp):
       #      pyxel.line(5+i*2, 110, 5+i*2, 113, 10)
