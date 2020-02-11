@@ -6,8 +6,9 @@ class pc:
         self.vec = 0
         self.direction = 0
         self.is_floating = False
+        self.vy = 0
 
     def update(self, x, y, dx):
-        self.pos.x = x
-        self.pos.y = y
+        self.pos.x += x
+        self.pos.y += y
         self.vec = dx

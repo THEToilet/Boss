@@ -10,6 +10,7 @@ import Bullet as bullet
 import Collide
 import Particle as ptcl
 import ItemGeneration as item_gene
+import EnemyMove as enemymov
 
 WINDOW_H = 120
 WINDOW_W = 200
@@ -17,6 +18,8 @@ PC_H = 16
 PC_W = 8
 ENEMY_H = 16
 ENEMY_W = 16
+ENEMY_CORE_NORMAL_X = 90
+ENEMY_CORE_NORMAL_Y = 50
 STAGE_RIGHT = 190  # ステージの右端
 STAGE_LEFT = 5
 STAGE_TOP = 5
@@ -31,8 +34,12 @@ class App:
 
         self.player_x = 100
         self.player_y = 100
+        self.player_dx = 0
+        self.player_dy = 0
         self.player_hp = 10
-        self.enemy_hp = 100
+        self.enemy_hp = 50
+        self.pc_before_direction = 3
+        self.is_jump = False
 
         self.is_OP = True
         self.is_game_over = False
@@ -43,6 +50,7 @@ class App:
         self.Balls = []
         self.Enemies = []
         self.Particles = []
+        self.Items = []
         self.enemy_core = enemy.Enemy()
 
         pyxel.run(self.update, self.draw)
@@ -51,8 +59,10 @@ class App:
         # ====== ctrl enemy ====== #
         # enemy_coreの移動
         if pyxel.frame_count > 1500:
-            self.enemy_core.update((math.sin(pyxel.frame_count/30))
-                                   * 30 + 75, (math.cos(pyxel.frame_count/30)) * 30 + 60)
+            self.enemy_core.update(ENEMY_CORE_NORMAL_X, ENEMY_CORE_NORMAL_Y)
+
+     #       self.enemy_core.update((math.sin(pyxel.frame_count/30))
+     #                          * 30 + 75, (math.cos(pyxel.frame_count/30)) * 30 + 60)
         elif pyxel.frame_count > 1000:
             self.enemy_core.update(
                 abs(math.sin(pyxel.frame_count/50)) * 140, 20)
@@ -138,39 +148,64 @@ class App:
                                 self.Enemies[j].pos.x, self.Enemies[j].pos.y)
                             self.Particles.append(new_particle)
                         del self.Enemies[j]
+                      #  del self.Balls[i]
                         break
+
             else:
                 del self.Balls[i]
                 break
 
     def ctrl_pc(self):
         # ====== ctrl pc ======
-        dx = self.player_x - self.pc.pos.x  # x軸方向の移動量
-        dy = self.player_y - self.pc.pos.y  # y軸方向の移動量
+     #   dx = self.player_x - self.pc.pos.x  # x軸方向の移動量
+        #    dy = self.player_y - self.pc.pos.y  # y軸方向の移動量
+        self.once_left_push = False
+        self.once_right_push = False
 
-        if pyxel.btn(pyxel.KEY_B) or pyxel.btn(pyxel.GAMEPAD_1_B):  # JUMP
-            self.player_y = max(self.player_y - 5, STAGE_TOP)
-            self.pc.direction = 1
+        print(self.pc.is_floating)
 
-        if pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD_1_DOWN):  # DOWN
+        if (pyxel.btn(pyxel.KEY_B) or pyxel.btn(pyxel.GAMEPAD_1_B)) and not(self.pc.is_floating):  # JUMP
+            self.pc.vy = -5
+            self.pc.is_floating = True
+
+        elif pyxel.btn(pyxel.KEY_DOWN) or pyxel.btn(pyxel.GAMEPAD_1_DOWN):  # DOWN
             self.pc.direction = 2
 
-        if pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.GAMEPAD_1_RIGHT):  # MOVE RIGHT
-            self.player_x = min(self.player_x + 4, STAGE_RIGHT)
+        elif pyxel.btn(pyxel.KEY_RIGHT) or pyxel.btn(pyxel.GAMEPAD_1_RIGHT):  # MOVE RIGHT
+            self.player_dx = 3
             self.pc.direction = 3
+            self.pc_before_direction = 3
+            self.once_right_push = True
+            if self.pc.is_floating:
+                self.player_dx = 1
 
-        if pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD_1_LEFT):  # MOVE LEFT
-            self.player_x = max(self.player_x - 4, STAGE_LEFT)
+        elif pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD_1_LEFT):  # MOVE LEFT
+            self.player_dx = -3
             self.pc.direction = 4
+            self.pc_before_direction = 4
+            self.once_left_push = True
+            if self.pc.is_floating:
+                self.player_dx = -1
 
-        if pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD_1_UP):  # FACE UP
+        elif pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD_1_UP):  # FACE UP
             self.pc.direction = 5
 
-        if dx != 0:
-            self.pc.update(self.player_x, self.player_y, dx)  # 座標と向きを更新
-        elif dy != 0:
-            self.pc.update(self.player_x, self.player_y,
-                           self.pc.vec)  # 座標のみ更新（真上or真下に移動）
+        elif not self.pc.is_floating:  # 何も押されていないときは最後のポーズをとる
+            self.pc.direction = self.pc_before_direction
+            self.player_dx = 0
+            self.once_left_push = False
+            self.once_right_push = False
+
+
+        if self.pc.is_floating:
+
+            if(self.pc.pos.y >= STAGE_BOTTOM):
+                self.pc.is_floating = False
+
+            self.pc.pos.y += self.pc.vy  # 加速度
+            self.pc.vy += 0.4
+
+        self.pc.update(self.player_dx, self.player_dy, 1)  # Speedと向きを更新
 
     def update(self):
         if pyxel.btnp(pyxel.KEY_Q):
@@ -194,11 +229,14 @@ class App:
         if self.enemy_hp < 0:
             self.is_game_clear = True
 
-        self.pc.pos.x = self.player_x
-        self.pc.pos.y = self.player_y
+     #   self.pc.pos.x = self.player_x
+      #  self.pc.pos.y = self.player_y
 
-        # player.yの最小値
-        self.player_y = min(self.player_y + 2, STAGE_BOTTOM)
+        # playerの自由落下
+        self.pc.pos.x = max(self.pc.pos.x, STAGE_LEFT)
+        self.pc.pos.x = min(self.pc.pos.x, STAGE_RIGHT)
+        self.pc.pos.y = min(self.pc.pos.y, STAGE_BOTTOM)
+      #  self.pc.pos.y = min(self.pc.pos.y ,STAGE_TOP)
 
         for i in range(len(self.Particles)):
             self.Particles[i].update()

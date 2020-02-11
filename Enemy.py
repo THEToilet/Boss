@@ -9,6 +9,3 @@ class Enemy:
     def update(self, x, y):
         self.pos.x = x
         self.pos.y = y
-
-    def normal_attack(self):
-      pass
