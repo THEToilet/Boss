@@ -5,7 +5,7 @@ class Bullet:
         self.pos = vec2.Vec2(0, 0)
         self.vec = 0
         self.size = 2
-        self.speed = 3
+        self.speed = 6
         self.color = 7
         self.direction = 0
 

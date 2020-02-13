@@ -37,7 +37,7 @@ class App:
         self.player_dx = 0
         self.player_dy = 0
         self.player_hp = 1000
-        self.enemy_hp = 50
+        self.enemy_hp = 100
         self.pc_before_direction = 3
         self.is_jump = False
 
@@ -170,7 +170,7 @@ class App:
                             and (self.Balls[i].pos.y < self.Enemies[j].pos.y + ENEMY_H)):
                         # 消滅(敵インスタンス破棄)
                         # enemyは体力性にする
-                        self.enemy_hp -= 0
+                        self.enemy_hp -= 1
                         # パーティクル生成
                         for i in range(random.randint(3, 5)):
                             new_particle = ptcl.Ptcl(
@@ -204,7 +204,7 @@ class App:
             self.pc_before_direction = 3
             self.once_right_push = True
             if self.pc.is_floating:
-                self.player_dx = 1
+                self.player_dx = 2
 
         elif pyxel.btn(pyxel.KEY_LEFT) or pyxel.btn(pyxel.GAMEPAD_1_LEFT):  # MOVE LEFT
             self.player_dx = -3
@@ -212,7 +212,7 @@ class App:
             self.pc_before_direction = 4
             self.once_left_push = True
             if self.pc.is_floating:
-                self.player_dx = -1
+                self.player_dx = -2
 
         elif pyxel.btn(pyxel.KEY_UP) or pyxel.btn(pyxel.GAMEPAD_1_UP):  # FACE UP
             self.pc.direction = 5
@@ -341,8 +341,9 @@ class App:
 
         # draw_enemy_hp
         pyxel.text(30, 110, "E", 8)
+        pyxel.rect(36,109,120,7,7)
         for i in range(self.enemy_hp):
-            pyxel.line(40+i*2, 110, 40+i*2, 113, 8)
+            pyxel.line(40+i, 110, 40+i, 113, 8)
 
     def draw_OP(self):
         pyxel.cls(5)
